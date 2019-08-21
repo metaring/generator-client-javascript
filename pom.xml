@@ -18,7 +18,7 @@
 
     <groupId>com.metaring</groupId>
     <artifactId>generator-client-javascript</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7-SNAPSHOT</version>
 
     <name>MetaRing Generator - Javascript Client</name>
     <description>Javascript Client code generators for the MetaRing platform</description>
@@ -42,7 +42,7 @@
     <scm>
         <url>https://github.com/metaring/generator-client-javascript.git</url>
         <developerConnection>scm:git:git@github.com:metaring/generator-client-javascript.git</developerConnection>
-        <tag>v1.0.6</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
