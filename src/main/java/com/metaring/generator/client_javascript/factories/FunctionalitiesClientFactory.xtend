@@ -16,10 +16,10 @@
 
 package com.metaring.generator.client_javascript.factories
 
-import java.util.List
 import com.metaring.generator.model.data.Functionality
+import java.util.List
+
 import static extension com.metaring.generator.model.util.Extensions.toStaticFieldName
-import static extension com.metaring.generator.model.util.Extensions.combineWithSystemNamespace
 
 class FunctionalitiesClientFactory implements com.metaring.generator.model.factories.FunctionalitiesClientFactory {
 
@@ -50,27 +50,40 @@ function functionalities(endPointProvider«IF functionalities.exists[it.reserved 
   «ENDIF»
   «FOR functionality : functionalities»
 
-  context.«functionality.fullyQualifiedName.toString.replace(".", "_").toStaticFieldName» = function(«IF functionality.input !== null»input, «ENDIF»callback) {
-    return new Promise(function(accept) {
-      setTimeout(function() {
-        var internalCallback = function(response, request) {
-          accept(response);
-          callback && callback(response, request);
-        };
-        context.endPointProvider({
-          id : parseInt((Math.random() * new Date().getTime() * Math.random() + new Date().getTime()).toString().split('.').join()),
-          name : '«IF functionality.reserved || functionality.restricted»«"rpc.auth.callReserved".combineWithSystemNamespace»«ELSE»«functionality.fullyQualifiedName»«ENDIF»',
-«IF functionality.reserved || functionality.restricted || functionality.input !== null»          param : «IF !functionality.reserved && !functionality.restricted»input || null«ELSE»{
-            name : '«IF functionality.restricted»«"rpc.auth.callRestricted".combineWithSystemNamespace»«ELSE»«functionality.fullyQualifiedName»«ENDIF»',
-«IF functionality.reserved || functionality.restricted»            data : context.identificationDataProvider()«IF functionality.restricted || functionality.input !== null»,«ENDIF»«ENDIF»
-«IF functionality.restricted || functionality.input !== null»            param : «IF !functionality.restricted»input || null«ELSE»{
-              name : '«functionality.fullyQualifiedName»'«IF functionality.restricted || functionality.input !== null»,«ENDIF»
-«IF functionality.restricted»              data : context.restrictedDataProvider(context.identificationDataProvider)«ENDIF»«IF functionality.input !== null»,«ENDIF»
-«IF functionality.input !== null»              param : input || null«ENDIF»
-            }«ENDIF»«ENDIF»
-          }«ENDIF»«ENDIF»
-        }, internalCallback);
-      });
+  context.«functionality.fullyQualifiedName.toString.replace(".", "_").toStaticFieldName» = function(«IF functionality.input !== null»input, «ENDIF»data, callback) {
+    data && (typeof data).toLowerCase() === 'function' && (callback = data) && (data = null);
+    return new Promise(«IF functionality.reserved || functionality.restricted»async «ENDIF»function(accept, refuse) {
+      try {
+        «IF functionality.reserved»var identificationData = context.identificationDataProvider();
+        identificationData && identificationData instanceof Promise && (identificationData = await identificationData);
+        identificationData = identificationData || null;«ENDIF»
+        «IF functionality.restricted»var enableData = context.restrictedDataProvider();
+        enableData && enableData instanceof Promise && (enableData = await enableData);
+        enableData = enableData || null;«ENDIF»
+        setTimeout(function() {
+          var internalCallback = function(response, request) {
+            accept(response);
+            callback && callback(response, request);
+          };
+          try {
+            var req = {
+              id : parseInt((Math.random() * new Date().getTime() * Math.random() + new Date().getTime()).toString().split('.').join()),
+              data : data || null,
+              name : "«functionality.fullyQualifiedName»"«IF functionality.reserved || functionality.restricted || functionality.input !== null»,«ENDIF»
+              «IF functionality.reserved»identificationData«IF functionality.restricted || functionality.input !== null»,«ENDIF»«ENDIF»
+              «IF functionality.restricted»enableData«IF functionality.input !== null»,«ENDIF»«ENDIF»
+              «IF functionality.input !== null»param : input || null«ENDIF»
+            };
+            var res = context.endPointProvider(req, internalCallback);
+            res && res instanceof Promise && (res = await res);
+            res && internalCallback(res, req);
+          } catch(e) {
+            return refuse(e);
+          }
+        });
+      } catch(e) {
+        return refuse(e);
+      }
     });
   };
 «ENDFOR»
