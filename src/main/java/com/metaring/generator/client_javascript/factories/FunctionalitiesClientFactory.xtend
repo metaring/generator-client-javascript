@@ -54,13 +54,13 @@ function functionalities(endPointProvider«IF functionalities.exists[it.reserved 
     data && (typeof data).toLowerCase() === 'function' && (callback = data) && (data = null);
     return new Promise(«IF functionality.reserved || functionality.restricted»async «ENDIF»function(accept, refuse) {
       try {
-        «IF functionality.reserved»var identificationData = context.identificationDataProvider();
+        «IF functionality.reserved || functionality.restricted»var identificationData = context.identificationDataProvider();
         identificationData && identificationData instanceof Promise && (identificationData = await identificationData);
         identificationData = identificationData || null;«ENDIF»
         «IF functionality.restricted»var enableData = context.restrictedDataProvider();
         enableData && enableData instanceof Promise && (enableData = await enableData);
         enableData = enableData || null;«ENDIF»
-        setTimeout(function() {
+        setTimeout(async function() {
           var internalCallback = function(response, request) {
             accept(response);
             callback && callback(response, request);
@@ -70,7 +70,7 @@ function functionalities(endPointProvider«IF functionalities.exists[it.reserved 
               id : parseInt((Math.random() * new Date().getTime() * Math.random() + new Date().getTime()).toString().split('.').join()),
               data : data || null,
               name : "«functionality.fullyQualifiedName»"«IF functionality.reserved || functionality.restricted || functionality.input !== null»,«ENDIF»
-              «IF functionality.reserved»identificationData«IF functionality.restricted || functionality.input !== null»,«ENDIF»«ENDIF»
+              «IF functionality.reserved || functionality.restricted»identificationData«IF functionality.restricted || functionality.input !== null»,«ENDIF»«ENDIF»
               «IF functionality.restricted»enableData«IF functionality.input !== null»,«ENDIF»«ENDIF»
               «IF functionality.input !== null»param : input || null«ENDIF»
             };
